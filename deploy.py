@@ -188,14 +188,13 @@ def one_zone(id):
 
     new_instance_id = new_instance_object.instance_id
     state = get_instance_state(new_instance_id)
-    print(new_instance_id, state)
 
     if state == 'running':
         try:
             status_old_instance = stop_instances(old_instance_id)
             raise Exception(status_old_instance)
         except Exception as state_error:
-            print(state_error)
+            print('Instance ID {} has been stopped'.format(old_instance_id))
 
 
 def deployment_all_AZ():
