@@ -7,33 +7,32 @@ awscli
 boto3
 
 
-This scritp will required python3 and boto3 installed on the local system where
-will be run. Additionally, the aws-cli must be installed and configured on that
-system, with the region from where the instances are installed.
-The user credentials should be also set, as the script will read the credentials
-from that file as well, in my case, those two files are in:
+This script will requires python3 and boto3 installed on the local system where
+will it be run. Additionally, the AWS command aws-cli must be installed and
+configured on that system, with the region from where the instances are installed.
+correct Credentials should be also set, other wise the script will fail.
+Below is the configuration as it is on my system.
 /Users/daelss45/.aws/config
-/Users/daelss45/.aws/credentials, with permission for both 400.
+/Users/daelss45/.aws/credentials
 daelss45$ ll
 total 16
 -rw-------  1 daelss45  staff   98 Mar 24 18:49 config
 -rw-------  1 daelss45  staff  236 Mar 24 18:49 credentials
 
-The scrip will take exactly 2 arguments, an error will be trown and the script 
-will be stopped its execution is this condition is not met.
+The script will take exactly 2 arguments, otherwise an error will be thrown and the script
+will executing.
 
-To run the script, you may just run that command below
-Download the script to your machine, then issue that command:
+To run the script, you may just run that command below, download the script to your machine, then issue that command:
 
 python3 /path/to/deploy.py old-image-id new-image-id
 
-or you can just give it write permission and run the command below:
-./deploy.py old-image-id new-image-id
+or Just give it write permission  (chmod 500 ./deploy.py) and run the command below:
+./deploy.py old-image-id new-image-id.
 
-After the script finish to run, the old-image-id instance will be stopped after
-the new-image-id has been started and running successfully.
+The script will first try to run the new image, and once it is complete, it will
+stop the old image. If the new-image fail, the script will stop, and the old one will be kept in place.
 
-if any of those two images (old-image-id or new-image-id) cannot be found on
+If any of those two images (old-image-id or new-image-id) cannot be found on
 the aws system, the script will throw and error and stop.
 
 I made several tests, and they were fine. There is still room to make improvements
