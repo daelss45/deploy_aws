@@ -28,8 +28,6 @@ def script_usage():
         new_image_id = sys.argv[2]
         return old_image_id, new_image_id
 
-
-
 def display_error(error):
     '''
     This function will be used to display an error.
@@ -52,7 +50,6 @@ def session_initialization():
     else:
         ec2 = session.resource('ec2')
         return ec2, session
-
 
 def get_old_instance_id(old_image_id, new_image_id):
     '''
@@ -105,12 +102,10 @@ def stop_instances(instance_id):
     time.sleep(60)
     return client_object_id
 
-
 def start_instances(instance_id):
     '''This will be used to stop an instance'''
     client = session.client('ec2')
     start_instance = client.start_instances(InstanceIds=[ instance_id ])
-
 
 def get_instance_security_group(instance_id):
     '''This will be used to get the security group id of the old instance'''
@@ -138,13 +133,10 @@ def get_instance_state(instance_id):
     instance_state = instance.state['Name']
     return instance_state
 
-
 def get_instance_key_name(instance_object):
 
     key_name = instance_object.key_name
     return key_name
-
-
 
 def launch_new_instance(new_image_id, AZ, instanceType, security_group, key_name):
     '''
@@ -172,8 +164,6 @@ def launch_new_instance(new_image_id, AZ, instanceType, security_group, key_name
     )
     time.sleep(300)
     new_instance_object = instance[0]
-
-    # print (new_instance_object)
     return instance[0]
 
 def one_zone(id):
@@ -200,7 +190,6 @@ def one_zone(id):
             raise Exception(status_old_instance)
         except Exception as state_error:
             print('Instance ID {} has been stopped'.format(old_instance_id))
-
 
 def deployment_all_AZ():
     zone_id = list('abc')
