@@ -23,6 +23,11 @@ def script_usage():
         print('*' * 10)
         print('\n')
         exit()
+    else:
+        old_image_id = sys.argv[1]
+        new_image_id = sys.argv[2]
+        return old_image_id, new_image_id
+
 
 
 def display_error(error):
@@ -49,7 +54,7 @@ def session_initialization():
         return ec2, session
 
 
-def get_old_instance_id(old_image_id=sys.argv[1], new_image_id=sys.argv[2]):
+def get_old_instance_id(old_image_id, new_image_id):
     '''
     This function will validate both the old-image-id and the new-image-id exist on AWS
     it will trow an  error and stop the script if any of the images is not found.
@@ -173,8 +178,8 @@ def launch_new_instance(new_image_id, AZ, instanceType, security_group, key_name
 
 def one_zone(id):
     # os.system('clear')
-    script_usage()
-    instance_object, old_image_id, new_image_id = get_old_instance_id()
+    old, new = script_usage()
+    instance_object, old_image_id, new_image_id = get_old_instance_id(old, new)
     old_instance_id = instance_object.instance_id
     AZ = instance_object.placement['AvailabilityZone']
     AZ = AZ[:-1] + id
@@ -204,6 +209,7 @@ def deployment_all_AZ():
 
 def main():
     os.system('clear')
+    script_usage()
     deployment_all_AZ()
 
 if __name__ == '__main__':
