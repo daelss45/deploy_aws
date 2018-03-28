@@ -143,6 +143,8 @@ def deployment(image_1, image_2):
     for i in 'abc':
         av_zone = av_zone + i
         launch_new_instance(image_2, av_zone, instance_type, all_sec_group, key_name, ec2, client)
+    for i in 'abc':
+        av_zone = av_zone + i
         stop_instance(instance_ids, client)
 
 def main():
