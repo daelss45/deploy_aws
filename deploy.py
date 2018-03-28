@@ -7,12 +7,9 @@
 import boto3
 import sys
 import os
-import time
 
 def script_usage():
-    '''
-    This function will throw an Exception if there is no Authentication or no AvailabilityZone.
-    '''
+    '''This function will throw an Exception if there is no Authentication or no AvailabilityZone.'''
     if len(sys.argv) != 3:
         print('\n')
         print('*' * 10)
@@ -23,15 +20,12 @@ def script_usage():
         print('*' * 10)
         print('\n')
         exit()
-    else:
-        old_image_id = sys.argv[1]
-        new_image_id = sys.argv[2]
-        return old_image_id, new_image_id
+
+def get_image_id():
+    return sys.argv[1], sys.argv[2]
 
 def display_error(error):
-    '''
-    This function will be used to display an error.
-    '''
+    '''This function will be used to display an error.'''
     print('*' * 10)
     print(error)
     print('Please make the necessary correction and try again!')
@@ -42,164 +36,120 @@ def display_error(error):
 def session_initialization():
     session = boto3.Session()
     if session.region_name == None:
-        error = 'Region is missing.'
+        error = 'No AWS region was found in your .aws/config file'
         display_error(error)
     elif session.get_credentials() == None:
         error = 'We are unable to locate credentials on this machine!'
         display_error(error)
     else:
-        ec2 = session.resource('ec2')
-        return ec2, session
+        ec2 = boto3.resource('ec2')
+        client = boto3.client('ec2')
+        return ec2, client
 
-def get_old_instance_id(old_image_id, new_image_id):
-    '''
-    This function will validate both the old-image-id and the new-image-id exist on AWS
-    it will trow an  error and stop the script if any of the images is not found.
-    it will return 3 values:
-    old_instance_id - the old object instance id
-    old_image_id - old image id
-    new_image_id - new image id
-    '''
-    ec2, session = session_initialization()
-    all_instance_id = []
-    all_image_id = {}
-
-    for instance in ec2.instances.all():
-        all_instance_id.append(instance)
-        all_image_id[instance] = instance.image_id
-
-    total_instance = len(all_instance_id)
-    count_instance = 0
-    old_instance_id = None
-    for instance_id in all_instance_id:
-        count_instance = count_instance + 1
-
-        if old_image_id != instance.image_id:
-            pass
-        elif old_image_id == instance.image_id:
-            old_instance_id = instance_id
-            # print(old_image_id, instance_id)
-
-            break
-        if count_instance == total_instance and old_instance_id is None:
-            print('OLD-Image {} was not found in that in region {}.'.format(old_image_id, session.region_name))
-            print('The script is stopped, no further action will be taken!')
-            exit()
-    # print(all_image_id)
-    if new_image_id not in all_image_id.values():
-        print('New-Image {} was not found in that {}.'.format(new_image_id, session.region_name))
-        print('The script is stopped, no further action will be taken!')
+def validate_image_id(image_id, ec2):
+    image = ec2.Image(image_id)
+    try:
+        image.state
+    except:
+        print('{} Image was not found'.format(image_id))
         exit()
-    # old_instance_id is an object id
-    old_instance_id = old_instance_id
-    return old_instance_id, old_image_id, new_image_id
 
-def stop_instances(instance_id):
-    '''This can be used to stop an instance'''
-    session = boto3.Session()
-    client = session.client('ec2')
-    client_object_id = client.stop_instances(InstanceIds=[ instance_id ])
-    time.sleep(60)
-    return client_object_id
-
-def start_instances(instance_id):
-    '''This will be used to stop an instance'''
-    client = session.client('ec2')
-    start_instance = client.start_instances(InstanceIds=[ instance_id ])
-
-def get_instance_security_group(instance_id):
-    '''This will be used to get the security group id of the old instance'''
-    ec2 = boto3.resource('ec2')
-    instance = ec2.Instance(instance_id)
-    security_group = []
-    groups = instance.describe_attribute(Attribute='groupSet')
-    for group in groups['Groups']:
-        g = groups['Groups'][0]['GroupId']
-        security_group.append(g)
-    return security_group
-
-def get_instance_type(instance_id):
-    '''This function will be used to get the instancetype'''
-    ec2 = boto3.resource('ec2')
-    instance = ec2.Instance(instance_id)
-    instance = instance.describe_attribute(Attribute='instanceType')
-    instance_type = instance['InstanceType']['Value']
-    return instance_type
-
-def get_instance_state(instance_id):
-    session = boto3.Session()
-    ec2 = session.resource('ec2')
-    instance = ec2.Instance(instance_id)
-    instance_state = instance.state['Name']
-    return instance_state
-
-def get_instance_key_name(instance_object):
-
-    key_name = instance_object.key_name
-    return key_name
-
-def launch_new_instance(new_image_id, AZ, instanceType, security_group, key_name):
-    '''
-    This function takes 4 parameters, and create a new instance, and it returns the instance object id.
-    new_image_id is the new Image-id
-    AZ is the AvailabilityZone where the new instance will be launched
-    instanceType: The type of the instance, (t2.micro, t2.nano, etc..)
-    security_group: the Security Group inherited from the old instance
-    key_name: the key_name inherited from the old instance.
-    '''
-    print('Create and Launch the new Instance Image-ID: {}'.format(new_image_id))
-    print('This will be create on AvailabilityZone: {}'.format(AZ))
-    session = boto3.Session()
-    ec2 = session.resource('ec2')
-    instance = ec2.create_instances(
-        ImageId=new_image_id,
-        Placement={
-            'AvailabilityZone': AZ
-        },
-        SecurityGroupIds=security_group,
-        InstanceType=instanceType,
-        MaxCount=1,
-        MinCount=1,
-        KeyName=key_name
+def get_instance_attributes(image_id, client):
+    'This will get the instance use by the image if any'
+    desc_image = client.describe_instances(
+        Filters=[
+            {
+                'Name' : 'image-id',
+                'Values': [ image_id]
+            }
+        ]
     )
-    time.sleep(300)
-    new_instance_object = instance[0]
-    return instance[0]
+    try:
+        instances_values = len(desc_image['Reservations'])
+        if instances_values == 0:
+            raise
+        all_instance = []
+        all_sec_group = []
+        for i in range(instances_values):
+            all_instance.append(desc_image['Reservations'][i]['Instances'][0]['InstanceId'])
+            key_name = desc_image['Reservations'][i]['Instances'][0]['KeyName']
+            av_zone = desc_image['Reservations'][i]['Instances'][0]['Placement']['AvailabilityZone']
+            instance_type = desc_image['Reservations'][i]['Instances'][0]['InstanceType']
+            sec_group = desc_image['Reservations'][i]['Instances'][0]['SecurityGroups']
 
-def one_zone(id):
-    # os.system('clear')
-    old, new = script_usage()
-    instance_object, old_image_id, new_image_id = get_old_instance_id(old, new)
-    old_instance_id = instance_object.instance_id
-    AZ = instance_object.placement['AvailabilityZone']
-    AZ = AZ[:-1] + id
-    instanceType = get_instance_type(old_instance_id)
-    security_group = get_instance_security_group(old_instance_id)
-    key_name = get_instance_key_name(instance_object)
+            for j in range(len(sec_group)):
+                all_sec_group.append(sec_group[j]['GroupName'])
 
-    new_instance_object = launch_new_instance(new_image_id, AZ, instanceType, security_group, key_name)
+        return all_instance, key_name, av_zone, instance_type, all_sec_group
 
-    print('The instance was launched successfully on Zone: {}'.format(AZ))
+    except:
+        exit('{} is not in used by any instance'.format(image_id))
 
-    new_instance_id = new_instance_object.instance_id
-    state = get_instance_state(new_instance_id)
+def start_instance(instance_id, client):
+    client.start_instaces(InstanceIds = [ instance_id ])
+    waiter = client.get_waiter('instance_status_ok')
+    waiter.wait(InstanceIds = [ instance_id ])
+    return waiter.name
 
-    if state == 'running':
-        try:
-            status_old_instance = stop_instances(old_instance_id)
-            raise Exception(status_old_instance)
-        except Exception as state_error:
-            print('Instance ID {} has been stopped'.format(old_instance_id))
+def stop_instance(instance_id, client):
+    try:
+        client.stop_instances(InstanceIds = instance_id )
+        waiter = client.get_waiter('instance_stopped')
+        waiter.wait(InstanceIds = [ instance_id ])
+        # if waiter.name == ''
+    except ClientError as err:
+        print(err)
 
-def deployment_all_AZ():
-    zone_id = list('abc')
-    for id in zone_id:
-        one_zone(id)
+def launch_new_instance(image_id, av_zone, instance_type, sec_groups, key_name, ec2, client):
+
+    print('The script is running...')
+    print('Instance from Image-id {} will be created'.format(image_id))
+    l_instance = ec2.create_instances(
+        ImageId = image_id,
+        Placement = {
+            'AvailabilityZone': av_zone
+        },
+        InstanceType = instance_type,
+        SecurityGroups = sec_groups,
+        KeyName = key_name,
+        MaxCount = 1,
+        MinCount = 1
+    )
+
+    waiter_launch = client.get_waiter('instance_exists')
+    waiter_launch.wait( InstanceIds = [ l_instance[0].id ] )
+
+    waiter_start = client.get_waiter('instance_status_ok')
+    waiter_start.wait(InstanceIds = [ l_instance[0].id ] )
+
+    waiter_system = client.get_waiter('system_status_ok')
+    waiter_system.wait(InstanceIds = [ l_instance[0].id ] )
+
+    # return l_instance[0].id, waiter_launch.name, waiter_start.name, waiter_system.name
+    if waiter_system.name == 'SystemStatusOk':
+        print('\nInstance: {} with image-id {} created and started successfully'.format(l_instance[0].id, image_id))
+        print('Now stopping the old instance')
+    else:
+        print('\nThere was a problem during the lauch of the instance.')
+        print('Program aborted')
+        exit()
+
+def deployment(image_1, image_2):
+    ec2, client = session_initialization()
+    validate_image_id(image_1, ec2)
+    validate_image_id(image_2, ec2)
+    instance_ids, key_name, av_zone, instance_type, all_sec_group = get_instance_attributes(image_1, client)
+    av_zone = av_zone[:-1]
+    for i in 'abc':
+        av_zone = av_zone + i
+        launch_new_instance(image_2, av_zone, instance_type, all_sec_group, key_name, ec2, client)
+        stop_instance(instance_ids, client)
 
 def main():
     os.system('clear')
     script_usage()
-    deployment_all_AZ()
+    old_image_id, new_image_id = get_image_id()
+    deployment(old_image_id, new_image_id)
 
 if __name__ == '__main__':
     main()
