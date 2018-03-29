@@ -95,10 +95,11 @@ def stop_instance(instance_id, client):
     try:
         client.stop_instances(InstanceIds = instance_id )
         waiter = client.get_waiter('instance_stopped')
-        waiter.wait(InstanceIds = [ instance_id ])
+        waiter.wait(InstanceIds = instance_id )
+        print('Instance has been stopped successfully')
         # if waiter.name == ''
-    except ClientError as err:
-        print(err)
+    except:
+        print('There was an issue!')
 
 def launch_new_instance(image_id, av_zone, instance_type, sec_groups, key_name, ec2, client):
 
@@ -128,7 +129,7 @@ def launch_new_instance(image_id, av_zone, instance_type, sec_groups, key_name, 
     # return l_instance[0].id, waiter_launch.name, waiter_start.name, waiter_system.name
     if waiter_system.name == 'SystemStatusOk':
         print('\nInstance: {} with image-id {} created and started successfully'.format(l_instance[0].id, image_id))
-        print('Now stopping the old instance')
+    
     else:
         print('\nThere was a problem during the lauch of the instance.')
         print('Program aborted')
@@ -141,10 +142,10 @@ def deployment(image_1, image_2):
     instance_ids, key_name, av_zone, instance_type, all_sec_group = get_instance_attributes(image_1, client)
     av_zone = av_zone[:-1]
     for i in 'abc':
-        av_zone = av_zone + i
-        launch_new_instance(image_2, av_zone, instance_type, all_sec_group, key_name, ec2, client)
+        zone = av_zone + i
+        launch_new_instance(image_2, zone, instance_type, all_sec_group, key_name, ec2, client)
     for i in 'abc':
-        av_zone = av_zone + i
+        zone = av_zone + i
         stop_instance(instance_ids, client)
 
 def main():
