@@ -3,7 +3,8 @@
 ```sh
 deploy.py
 ```
-This is a simple script that use the AWS boto3 module to query teh AWS api. For the script to work, a few packages must be installed on the local computer where the script will be running to query the AWS Platform.
+This is a simple script that use the AWS boto3 module to query teh AWS api. For the script to work, a few packages must be installed on the local computer where the script will be running to query the AWS Platform. The script will query 3 images on 3 differents availability zone, and will try to replace those old images with 3 new images, buy building 3 new instances one in AZ. When the creation of these new instances have been successfully completed and running, the scrip will shutdown the 3 old instances. Simply put, the script will attempt to do a deployment with 0 downtime.
+
 ### Requirements:
 - python3
 - boto3
