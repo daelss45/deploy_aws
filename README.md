@@ -1,31 +1,82 @@
-README.md
+# README.md
+### 
+```sh
+deploy.py
+```
+This is a simple script that use the AWS boto3 module to query teh AWS api. For the script to work, a few packages must be installed on the local computer where the script will be running to query the AWS Platform.
+### Requirements:
+- python3
+- boto3
+- os
+- sys
+- awscli
+- valid iam account
+- aws must be configure
 
-Requirements:
-python3
-pip
-awscli
-boto3
+### Below is a test that shows data as the script is running.
+The script will take two arguments, they must be two amazone machine image, failing to do so will throw an error and the script will stop running. Below is the output, with no argument:
+##### Output from MacOS High Sierra
 
+```sh
+daelss45$ ./deploy.py ami-4543be3d ami-79873901 ami-ea950192
+**********
+Script incorrect USAGE
+USAGE: ./deploy.py OLD_AMI_ID NEW_AMI_ID
+OLD_AMI_ID is an old image-id
+NEW_AMI_ID is the new image-id
+**********
+```
 
-This script deploy.py requires python3, awscli and boto3 installed on the local system where will it be running. Additionally, the AWS command aws-cli must be installed and configured on that system, with the region from where the instances are installed. Credentials should be also set, other wise the script will fail.
-Below is the configuration as it is on my system:
+```
+##### output from Ubuntu
+```sh
+daelss45@miaflub001:~$ cat /etc/lsb-release 
+DISTRIB_ID=Ubuntu
+DISTRIB_RELEASE=16.10
+DISTRIB_CODENAME=yakkety
+DISTRIB_DESCRIPTION="Ubuntu 16.10"
+daelss45@miaflub001:~$ python deploy.py 
+**********
+Script incorrect USAGE
+USAGE: deploy.py OLD_AMI_ID NEW_AMI_ID
+OLD_AMI_ID is an old image-id
+NEW_AMI_ID is the new image-id
+**********
+daelss45@miaflub001:~$ 
+```
 
-/Users/daelss45/.aws/config
-/Users/daelss45/.aws/credentials
+### Other requirements. 
+aws package must be locally installed on the local machine. There are a few tutorials on AWS that shows how to do it. I made a few test on 3 different platform (macbook pro 10.13, ubunut 16.10 and Centos 7.4x), but similar, and they each were susccessfully.
 
--rw-------  1 daelss45  staff   98 Mar 24 18:49 config
--rw-------  1 daelss45  staff  236 Mar 24 18:49 credentials
+### what if no aws config or credentials.
+An error similar to below will be thrown
+```bash
+daelss45@miaflub001:~$ python ./deploy.py  ami-79873901 ami-4543be3d 
+**********
+We are unable to locate credentials on this machine!
+Please make the necessary correction and try again!
+We are terminating the program!
+**********
+daelss45@miaflub001:~$ 
+```
 
-The script will take exactly 2 arguments, otherwise an error will be thrown and the script will executing.
+### When all requirements were met, we should see a screen as below:
+```bash
+daelss45$ ./deploy.py  ami-79873901 ami-4543be3d 
+The script is running...
+Instance from Image-id ami-4543be3d will be created
 
-To run the script, you may just run that command below, download the script to your machine, then issue that command:
+Instance: i-0eb343922bb7128dc with image-id ami-4543be3d created and started successfully
+The script is running...
+Instance from Image-id ami-4543be3d will be created
 
-python3 /path/to/deploy.py old-image-id new-image-id or Just give it write permission  (chmod 544 ./deploy.py, I assume you are in the same directory of the script) and run the command below from your Linux or Mac terminal:
+Instance: i-03be4e6c70dea10c8 with image-id ami-4543be3d created and started successfully
+The script is running...
+Instance from Image-id ami-4543be3d will be created
 
-./deploy.py old-image-id new-image-id.
-
-The script will first try to run the new image, and once it is complete, it will stop the old image. If the new-image fail, the script will stop, and the old one will be kept in place.
-
-If any of those two images (old-image-id or new-image-id) cannot be found on the aws system, the script will throw and error and stop.
-
-I made several tests, and they were fine. There is still room to make improvements but I do not want to wait, we surely can discuss further.
+Instance: i-0d69e9d09e7675b6f with image-id ami-4543be3d created and started successfully
+Instance has been stopped successfully
+Instance has been stopped successfully
+Instance has been stopped successfully
+daelss45$
+```
